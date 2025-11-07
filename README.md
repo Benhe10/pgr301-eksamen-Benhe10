@@ -63,4 +63,4 @@ Ved tekniske problemer med miljø under eksamen, kontakt lærer. Du står naturl
   [https://github.com/glennbechdevops/pgr301-eksamen-2025](https://github.com/glennbechdevops/pgr301-eksamen-2025).
 
 **Oppgaveteksten ligger her:**
- [https://github.com/glennbechdevops/pgr301-eksamen-2025/README_OPPGAVER.md]([https://github.com/glennbechdevops/pgr301-eksamen-2025/README_OPPGAVER.md](https://github.com/glennbechdevops/pgr301-eksamen-2025/blob/main/README_OPPGAVER.md).
+ [https://github.com/glennbechdevops/pgr301-eksamen-2025/README_OPPGAVER.md](https://github.com/glennbechdevops/pgr301-eksamen-2025/blob/main/README_OPPGAVER.md).
