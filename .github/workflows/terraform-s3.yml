@@ -1,0 +1,70 @@
+name: Terraform S3 - CI
+
+on:
+  pull_request:
+    paths:
+      - 'infra-s3/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra-s3/**'
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    env:
+      TF_INPUT: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Init
+        working-directory: infra-s3
+        run: terraform init -backend=false
+
+      - name: Terraform Format Check
+        working-directory: infra-s3
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        working-directory: infra-s3
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: infra-s3
+        run: terraform plan -out=tfplan
+
+  apply:
+    needs: terraform
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: \${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: \${{ secrets.AWS_REGION }}
+
+      - name: Terraform Init (backend)
+        working-directory: infra-s3
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: infra-s3
+        run: terraform apply -auto-approve
