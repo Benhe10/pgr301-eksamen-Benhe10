@@ -16,6 +16,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build jar with Maven
+        working-directory: sentiment-docker
+        run: mvn -B -DskipTests package
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
