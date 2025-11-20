@@ -1,44 +1,67 @@
-name: Deploy SAM Application
+name: SAM validate/build/deploy
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
     paths:
       - 'sam-comprehend/**'
-  pull_request:
+  push:
     branches:
       - main
     paths:
       - 'sam-comprehend/**'
 
 jobs:
-  deploy:
+  validate_build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.11'
 
-      - name: Set up SAM CLI
-        uses: aws-actions/setup-sam@v2
+      - name: Install SAM CLI
+        run: |
+          wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+          unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
+          sudo ./sam-installation/install
+
+      - name: sam validate & sam build
+        working-directory: sam-comprehend
+        run: |
+          sam validate
+          sam build
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: validate_build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v3
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-1
+          aws-region: ${{ secrets.AWS_REGION || 'eu-west-1' }}
 
-      - name: Deploy SAM application
-        working-directory: ./sam-comprehend
+      - name: Install SAM CLI
         run: |
-          sam deploy \
-            --stack-name aialpha-sentiment-glennbech \
-            --no-confirm-changeset \
-            --no-fail-on-empty-changeset
+          wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
+          unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
+          sudo ./sam-installation/install
+
+      - name: sam build
+        working-directory: sam-comprehend
+        run: sam build
+
+      - name: sam deploy (non-interactive)
+        working-directory: sam-comprehend
+        env:
+          S3_BUCKET: ${{ secrets.S3_DEPLOY_BUCKET }}
+        run: |
+          sam deploy --no-confirm-changeset --stack-name aialpha-sam --capabilities CAPABILITY_IAM --resolve-s3

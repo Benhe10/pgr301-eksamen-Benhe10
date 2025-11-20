@@ -22,3 +22,16 @@ infra-s3/*.tmp
 infra-s3/*backup*
 *.swp
 *~local-backups/
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+# Terraform plan output
+tfplan
+# Maven/Java build outputs
+**/target/
+# SAM build
+**/.aws-sam/
+# media logs (if you prefer not to commit heavy logs)
+media/*.log
+media/docker-*.txt
