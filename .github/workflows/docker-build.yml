@@ -13,6 +13,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CR_PAT: ${{ secrets.CR_PAT }}
     steps:
       - uses: actions/checkout@v4
 
@@ -43,10 +45,8 @@ jobs:
           ./run_smoketest.sh
 
       - name: Push to GHCR if token provided
-        if: ${{ secrets.CR_PAT != '' }}
-        env:
-          CR_PAT: ${{ secrets.CR_PAT }}
+        if: ${{ env.CR_PAT != '' }}
         run: |
-          echo $CR_PAT | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+          echo "${{ env.CR_PAT }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
           docker tag aialpha-sentiment:ci ghcr.io/${{ github.repository_owner }}/aialpha-sentiment:latest
           docker push ghcr.io/${{ github.repository_owner }}/aialpha-sentiment:latest
