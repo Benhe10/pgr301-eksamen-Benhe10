@@ -1,0 +1,39 @@
+name: SAM CI
+
+on:
+  pull_request:
+    paths:
+      - 'sam-comprehend/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'sam-comprehend/**'
+
+jobs:
+  validate_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install SAM CLI
+        run: python3 -m pip install --user aws-sam-cli
+
+      - name: Install dependencies
+        working-directory: sam-comprehend
+        run: |
+          if [ -f requirements.txt ]; then python3 -m pip install --user -r requirements.txt; fi
+
+      - name: SAM Validate
+        working-directory: sam-comprehend
+        run: sam validate
+
+      - name: SAM Build
+        working-directory: sam-comprehend
+        run: sam build
