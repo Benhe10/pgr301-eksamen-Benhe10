@@ -35,3 +35,17 @@ tfplan
 # media logs (if you prefer not to commit heavy logs)
 media/*.log
 media/docker-*.txt
+# Terraform local stuff
+**/.terraform/
+**/*.tfstate
+**/*.tfplan
+
+# SAM build output
+sam-comprehend/.aws-sam/
+
+# Java build output
+sentiment-docker/target/
+
+# Media logs (optional)
+media/*.txt
+media/*.log

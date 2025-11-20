@@ -1,12 +1,11 @@
-name: SAM validate/build/deploy
+name: SAM validate and build (local CI)
 
 on:
   pull_request:
     paths:
       - 'sam-comprehend/**'
   push:
-    branches:
-      - main
+    branches: [ main ]
     paths:
       - 'sam-comprehend/**'
 
@@ -17,7 +16,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Install Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -28,40 +27,10 @@ jobs:
           unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
           sudo ./sam-installation/install
 
-      - name: sam validate & sam build
+      - name: Validate SAM template
         working-directory: sam-comprehend
-        run: |
-          sam validate
-          sam build
+        run: sam validate
 
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: validate_build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION || 'eu-west-1' }}
-
-      - name: Install SAM CLI
-        run: |
-          wget https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip
-          unzip aws-sam-cli-linux-x86_64.zip -d sam-installation
-          sudo ./sam-installation/install
-
-      - name: sam build
+      - name: Build SAM project
         working-directory: sam-comprehend
         run: sam build
-
-      - name: sam deploy (non-interactive)
-        working-directory: sam-comprehend
-        env:
-          S3_BUCKET: ${{ secrets.S3_DEPLOY_BUCKET }}
-        run: |
-          sam deploy --no-confirm-changeset --stack-name aialpha-sam --capabilities CAPABILITY_IAM --resolve-s3
