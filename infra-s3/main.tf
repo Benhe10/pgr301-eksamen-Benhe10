@@ -1,0 +1,43 @@
+provider "aws" {
+  region = var.region
+  # Når du har credentials, settes disse via env eller GitHub secrets i CI
+}
+
+resource "aws_s3_bucket" "aialpha_results" {
+  bucket = var.bucket_name
+
+  acl    = "private"
+
+  server_side_encryption_configuration {
+    rule {
+      apply_server_side_encryption_by_default {
+        sse_algorithm = "AES256"
+      }
+    }
+  }
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    id      = "temporary-files"
+    enabled = true
+
+    prefix = var.temporary_prefix
+
+    transition {
+      days          = 30
+      storage_class = "STANDARD_IA"
+    }
+
+    expiration {
+      days = var.temporary_days_to_delete
+    }
+  }
+
+  tags = {
+    Project = "AiAlpha"
+    Owner   = "Kandidat"
+  }
+}
