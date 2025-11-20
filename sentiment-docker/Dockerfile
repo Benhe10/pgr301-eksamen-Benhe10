@@ -1,9 +1,8 @@
-# Runtime-only Dockerfile: bruker ferdigbygget jar fra target/
-FROM eclipse-temurin:17-jre
+# Runtime-only Dockerfile: bruk Java 21 runtime
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
-# Kopier ferdig jar som er bygget lokalt (mvn package)
-# Maven bygger jar i sentiment-docker/target/*.jar
+# Kopier ferdigbygget jar fra target/
 COPY target/*.jar app.jar
 
 EXPOSE 8080
