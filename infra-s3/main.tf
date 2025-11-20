@@ -1,6 +1,9 @@
 provider "aws" {
-  region = var.region
-  # Når du har credentials, settes disse via env eller GitHub secrets i CI
+  region                         = var.region
+  skip_credentials_validation    = true
+  skip_region_validation         = true
+  skip_requesting_account_id     = true
+  # Når reelle credentials er tilgjengelig, fjern eller kommenter disse linjene.
 }
 
 resource "aws_s3_bucket" "aialpha_results" {
