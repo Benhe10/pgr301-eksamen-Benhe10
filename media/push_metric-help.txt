@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/workspaces/pgr301-eksamen-Benhe10/scripts/push_test_metric.py", line 8, in <module>
+    import boto3
+ModuleNotFoundError: No module named 'boto3'

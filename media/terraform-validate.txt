@@ -1,0 +1,15 @@
+[33m╷[0m[0m
+[33m│[0m [0m[1m[33mWarning: [0m[0m[1mArgument is deprecated[0m
+[33m│[0m [0m
+[33m│[0m [0m[0m  with aws_s3_bucket.aialpha_results,
+[33m│[0m [0m  on main.tf line 9, in resource "aws_s3_bucket" "aialpha_results":
+[33m│[0m [0m   9: resource "aws_s3_bucket" "aialpha_results" [4m{[0m[0m
+[33m│[0m [0m
+[33m│[0m [0mversioning is deprecated. Use the aws_s3_bucket_versioning resource
+[33m│[0m [0minstead.
+[33m│[0m [0m
+[33m│[0m [0m(and 2 more similar warnings elsewhere)
+[33m╵[0m[0m
+[32m[1mSuccess![0m The configuration is valid, but there were some
+validation warnings as shown above.
+[0m

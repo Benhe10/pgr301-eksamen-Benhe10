@@ -1,0 +1,24 @@
+# Java / Maven build outputs
+/sentiment-docker/target/
+**/target/
+
+# SAM local build
+/sam-comprehend/.aws-sam/
+
+# Terraform state & cache
+/infra-s3/.terraform/
+/infra-s3/.terraform.lock.hcl
+
+# Local dev containers, IDE
+.vscode/
+.idea/
+
+# Docker images / containers
+/docker-*
+
+# Backup/temp files
+infra-s3/*.bak
+infra-s3/*.tmp
+infra-s3/*backup*
+*.swp
+*~local-backups/
