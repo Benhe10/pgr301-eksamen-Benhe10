@@ -37,12 +37,14 @@ jobs:
       - name: Build Docker image
         working-directory: sentiment-docker
         run: |
-          docker build -t aialpha-sentiment:ci .
+          # Build image and tag for CI and local-consistency
+          docker build -t aialpha-sentiment:ci -t aialpha-sentiment:local .
 
       - name: Run smoke-test (requires docker)
         working-directory: sentiment-docker
         run: |
-          ./run_smoketest.sh
+          # Allow run_smoketest.sh to use IMAGE env; default is aialpha-sentiment:local
+          IMAGE=aialpha-sentiment:local ./run_smoketest.sh
 
       - name: Push to GHCR if token provided
         if: ${{ env.CR_PAT != '' }}
