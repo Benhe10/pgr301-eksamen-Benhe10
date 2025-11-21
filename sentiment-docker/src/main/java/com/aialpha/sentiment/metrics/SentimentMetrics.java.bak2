@@ -15,15 +15,25 @@ public class SentimentMetrics {
 
     private final MeterRegistry meterRegistry;
 
-    // Default instruments without per-call tags (we will create per-call instruments when tags needed)
-    private final DistributionSummary confidenceSummaryBase;
+    // Reused instruments
+    private final Timer bedrockTimer;
+    private final DistributionSummary confidenceSummary;
     private final AtomicInteger companiesDetectedGauge;
 
+    // Constructor injection of MeterRegistry
     public SentimentMetrics(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
 
-        // Base DistributionSummary (no tags) - we'll use builder for tagged recordings
-        this.confidenceSummaryBase = DistributionSummary.builder("sentiment.analysis.confidence")
+        // Timer for Bedrock/API duration measurements
+        this.bedrockTimer = Timer.builder("sentiment.bedrock.request.latency")
+                .description("Time spent calling Bedrock / external model")
+                .publishPercentileHistogram()
+                .minimumExpectedValue(Duration.ofMillis(1))
+                .maximumExpectedValue(Duration.ofSeconds(30))
+                .register(meterRegistry);
+
+        // DistributionSummary for confidence scores (0.0 - 1.0)
+        this.confidenceSummary = DistributionSummary.builder("sentiment.analysis.confidence")
                 .description("Distribution of analysis confidence scores (0.0-1.0)")
                 .baseUnit("score")
                 .register(meterRegistry);
@@ -36,12 +46,13 @@ public class SentimentMetrics {
     }
 
     /**
-     * Counter for sentiment analysis requests
+     * Example implementation: Counter for sentiment analysis requests
+     * This counter tracks the total number of sentiment analyses by sentiment type and company
      */
     public void recordAnalysis(String sentiment, String company) {
         Counter.builder("sentiment.analysis.total")
-                .tag("sentiment", sentiment == null ? "UNKNOWN" : sentiment)
-                .tag("company", company == null ? "UNKNOWN" : company)
+                .tag("sentiment", sentiment)
+                .tag("company", company)
                 .description("Total number of sentiment analysis requests")
                 .register(meterRegistry)
                 .increment();
@@ -49,20 +60,20 @@ public class SentimentMetrics {
 
     /**
      * Record a duration (milliseconds) for a call/operation related to a company and model.
-     * Uses a Timer.builder per-call to attach tags.
+     * This uses Micrometer Timer.
      */
     public void recordDuration(long milliseconds, String company, String model) {
-        if (milliseconds < 0) return;
-        Timer.builder("sentiment.bedrock.request.latency")
-                .description("Time spent calling Bedrock / external model")
+        if (milliseconds >= 0) {
+            bedrockTimer
                 .tag("company", company == null ? "unknown" : company)
                 .tag("model", model == null ? "unknown" : model)
-                .register(meterRegistry)
-                .record(Duration.ofMillis(milliseconds));
+                .record(java.time.Duration.ofMillis(milliseconds));
+        }
     }
 
     /**
      * Update gauge with number of companies detected in latest analysis.
+     * Writing the count into the AtomicInteger will update the Gauge's value.
      */
     public void recordCompaniesDetected(int count) {
         if (count < 0) count = 0;
@@ -71,17 +82,14 @@ public class SentimentMetrics {
 
     /**
      * Record a confidence score (0.0 - 1.0) into a DistributionSummary.
-     * Uses DistributionSummary.builder per-call for tags.
+     * We guard for NaN and out-of-range values.
      */
     public void recordConfidence(double confidence, String sentiment, String company) {
         if (Double.isNaN(confidence)) return;
         final double v = Math.max(0.0, Math.min(1.0, confidence));
-        DistributionSummary.builder("sentiment.analysis.confidence")
-                .description("Distribution of analysis confidence scores (0.0-1.0)")
-                .baseUnit("score")
-                .tag("sentiment", sentiment == null ? "unknown" : sentiment)
-                .tag("company", company == null ? "unknown" : company)
-                .register(meterRegistry)
-                .record(v);
+        confidenceSummary
+            .tag("sentiment", sentiment == null ? "unknown" : sentiment)
+            .tag("company", company == null ? "unknown" : company)
+            .record(v);
     }
 }
