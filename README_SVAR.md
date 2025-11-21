@@ -129,7 +129,7 @@ curl -sS http://127.0.0.1:8080/actuator/health
 # 3. GitHub Actions — hva kjører og hvordan aktivere full deploy
 
 **Link til vellykket Docker-workflow fra repoet:**
-https://github.com/Benhe10/pgr301-eksamen-Benhe10/actions/runs/19556982604/job/56001334334
+https://github.com/Benhe10/pgr301-eksamen-Benhe10/actions/runs/19558276266/job/56005134986
 
 ## Hvilke workflows finnes i repoet
 
