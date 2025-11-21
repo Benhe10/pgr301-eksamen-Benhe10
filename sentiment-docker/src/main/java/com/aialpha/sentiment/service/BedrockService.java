@@ -4,6 +4,8 @@ import com.aialpha.sentiment.model.CompanySentiment;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import com.aialpha.sentiment.metrics.SentimentMetrics;
+import org.springframework.beans.factory.annotation.Autowired;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 import software.amazon.awssdk.services.bedrockruntime.model.InvokeModelRequest;
@@ -17,12 +19,14 @@ public class BedrockService {
 
     private final BedrockRuntimeClient bedrockClient;
     private final ObjectMapper objectMapper;
+    private final SentimentMetrics sentimentMetrics;
 
     private static final String MODEL_ID = "amazon.nova-micro-v1:0";
 
-    public BedrockService(BedrockRuntimeClient bedrockClient, ObjectMapper objectMapper) {
+    public BedrockService(BedrockRuntimeClient bedrockClient, ObjectMapper objectMapper, SentimentMetrics sentimentMetrics) {
         this.bedrockClient = bedrockClient;
         this.objectMapper = objectMapper;
+        this.sentimentMetrics = sentimentMetrics;
     }
 
     public List<CompanySentiment> analyzeSentiment(String text) {
@@ -53,16 +57,38 @@ public class BedrockService {
                 """, escapeJson(prompt));
 
             // Invoke Bedrock model
+            long startNs = System.nanoTime();
+
             InvokeModelRequest request = InvokeModelRequest.builder()
                     .modelId(MODEL_ID)
                     .body(SdkBytes.fromUtf8String(requestBody))
                     .build();
 
             InvokeModelResponse response = bedrockClient.invokeModel(request);
+            long durationMs = (System.nanoTime() - startNs) / 1_000_000L;
             String responseBody = response.body().asUtf8String();
 
-            // Parse Nova's response
-            return parseNovaResponse(responseBody);
+            // Parse Nova's response into list
+            List<CompanySentiment> results = parseNovaResponse(responseBody);
+
+            // Record metrics: duration (model), number of companies, confidence per company and analysis counter
+            try {
+                // record latency (use model id as model name)
+                sentimentMetrics.recordDuration(durationMs, "", getModelId());
+
+                // record number of companies detected
+                sentimentMetrics.recordCompaniesDetected(results.size());
+
+                // record confidence and increment counters per company
+                for (CompanySentiment cs : results) {
+                    sentimentMetrics.recordConfidence(cs.getConfidence(), cs.getSentiment(), cs.getCompany());
+                    sentimentMetrics.recordAnalysis(cs.getSentiment(), cs.getCompany());
+                }
+            } catch (Exception _m) {
+                // metrics must never break main flow
+            }
+
+            return results;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to analyze sentiment with Bedrock: " + e.getMessage(), e);
