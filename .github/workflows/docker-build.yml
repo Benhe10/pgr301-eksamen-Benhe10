@@ -37,7 +37,7 @@ jobs:
       - name: Build Docker image
         working-directory: sentiment-docker
         run: |
-          docker build -t aialpha-sentiment:ci .
+          docker build -t aialpha-sentiment:local .
 
       - name: Run smoke-test (requires docker)
         working-directory: sentiment-docker
